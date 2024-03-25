@@ -6,19 +6,19 @@ import (
 	"testing"
 )
 
-func f[T any, U any](f func(T) (U, error)) Function[T, U] {
-	return NewFunctionFunc(f)
+func f[T any, U any](f func(T) (U, error)) Applier[T, U] {
+	return NewApplierFunc(f)
 }
 
-func fe[T any, U any](f func(T) U) Function[T, U] {
-	return NewFunctionFuncWithNoError(f)
+func fe[T any, U any](f func(T) U) Applier[T, U] {
+	return NewApplierFuncWithNoError(f)
 }
 
-func c[T any, U any, V any](f1 Function[T, U], f2 Function[U, V]) Function[T, V] {
-	return Concatenate(f1, f2)
+func c[T any, U any, V any](f1 Applier[T, U], f2 Applier[U, V]) Applier[T, V] {
+	return Compose(f1, f2)
 }
 
-func check[T any, U comparable](t *testing.T, f Function[T, U], in T, want U) {
+func check[T any, U comparable](t *testing.T, f Applier[T, U], in T, want U) {
 	t.Helper()
 	got, err := f.Apply(in)
 	if err != nil {
@@ -29,7 +29,7 @@ func check[T any, U comparable](t *testing.T, f Function[T, U], in T, want U) {
 	}
 }
 
-func checkError[T any, U comparable](t *testing.T, f Function[T, U], in T, want error) {
+func checkError[T any, U comparable](t *testing.T, f Applier[T, U], in T, want error) {
 	t.Helper()
 	v, got := f.Apply(in)
 	if v != *new(U) {
@@ -48,7 +48,7 @@ func (e *eq) Equals(i int) bool {
 	return e.i == i
 }
 
-func TestNewFunctionFunc(t *testing.T) {
+func TestNewApplierFunc(t *testing.T) {
 	// java's t -> t + 1
 	f1 := f(func(i int) (int, error) { return i + 1, nil })
 	check(t, f1, 1, 2)
@@ -64,7 +64,7 @@ func TestNewFunctionFunc(t *testing.T) {
 	check(t, f3, 2, false)
 }
 
-func TestNewFunctionFuncWithNoError(t *testing.T) {
+func TestNewApplierFuncWithNoError(t *testing.T) {
 	// java's i -> i + 1
 	f1 := fe(func(i int) int { return i + 1 })
 	check(t, f1, 1, 2)
@@ -80,14 +80,14 @@ func TestNewFunctionFuncWithNoError(t *testing.T) {
 	check(t, f3, 2, false)
 }
 
-func checkNil[T any, U any](t *testing.T, f Function[T, U]) {
+func checkNil[T any, U any](t *testing.T, f Applier[T, U]) {
 	t.Helper()
 	if f != nil {
 		t.Error("f must be nil")
 	}
 }
 
-func TestConcatenate(t *testing.T) {
+func TestCompose(t *testing.T) {
 	// java's f1.andThen(f2) or f1.compose(f2).
 	f1 := c(fe(strconv.Itoa), f(strconv.Atoi))
 	check(t, f1, 100, 100)
@@ -98,9 +98,9 @@ func TestConcatenate(t *testing.T) {
 	f3 := c(c(fe(strconv.Itoa), f(strconv.Atoi)), fe(strconv.Itoa))
 	check(t, f3, 100, "100")
 
-	checkNil(t, c(Function[int, string](nil), f(strconv.Atoi)))
-	checkNil(t, c(fe(strconv.Itoa), Function[string, int](nil)))
-	checkNil(t, c(fe(strconv.Itoa), c(Function[string, int](nil), fe(strconv.Itoa))))
+	checkNil(t, c(Applier[int, string](nil), f(strconv.Atoi)))
+	checkNil(t, c(fe(strconv.Itoa), Applier[string, int](nil)))
+	checkNil(t, c(fe(strconv.Itoa), c(Applier[string, int](nil), fe(strconv.Itoa))))
 
 	want := errors.New("foo")
 	f4 := c(f(strconv.Atoi), f(func(int) (int, error) { return 0, want }))
