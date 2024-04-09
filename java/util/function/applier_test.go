@@ -18,7 +18,7 @@ func c[T any, U any, V any](f1 Applier[T, U], f2 Applier[U, V]) Applier[T, V] {
 	return Compose(f1, f2)
 }
 
-func check[T any, U comparable](t *testing.T, f Applier[T, U], in T, want U) {
+func checkApplier[T any, U comparable](t *testing.T, f Applier[T, U], in T, want U) {
 	t.Helper()
 	got, err := f.Apply(in)
 	if err != nil {
@@ -29,7 +29,7 @@ func check[T any, U comparable](t *testing.T, f Applier[T, U], in T, want U) {
 	}
 }
 
-func checkError[T any, U comparable](t *testing.T, f Applier[T, U], in T, want error) {
+func checkApplierError[T any, U comparable](t *testing.T, f Applier[T, U], in T, want error) {
 	t.Helper()
 	v, got := f.Apply(in)
 	if v != *new(U) {
@@ -40,47 +40,51 @@ func checkError[T any, U comparable](t *testing.T, f Applier[T, U], in T, want e
 	}
 }
 
-type eq struct {
+type calc struct {
 	i int
 }
 
-func (e *eq) Equals(i int) bool {
-	return e.i == i
+func (c *calc) Add(i int) (int, error) {
+	return c.i + i, nil
+}
+
+func (c *calc) Sub(i int) int {
+	return c.i - i
 }
 
 func TestNewApplierFunc(t *testing.T) {
 	// java's t -> t + 1
 	f1 := f(func(i int) (int, error) { return i + 1, nil })
-	check(t, f1, 1, 2)
+	checkApplier(t, f1, 1, 2)
 
 	// java's static method usecase like Integer::parseInt.
 	f2 := f(strconv.Atoi)
-	check(t, f2, "100", 100)
+	checkApplier(t, f2, "100", 100)
 
 	// java's instance method usecase like obj::Equals.
-	v := &eq{1}
-	f3 := f(func(i int) (bool, error) { return v.Equals(i), nil })
-	check(t, f3, 1, true)
-	check(t, f3, 2, false)
+	c := &calc{1}
+	f3 := f(c.Add)
+	checkApplier(t, f3, 1, 2)
+	checkApplier(t, f3, 2, 3)
 }
 
 func TestNewApplierFuncWithNoError(t *testing.T) {
 	// java's i -> i + 1
 	f1 := fe(func(i int) int { return i + 1 })
-	check(t, f1, 1, 2)
+	checkApplier(t, f1, 1, 2)
 
 	// java's static method usecase like Integer::parseInt.
 	f2 := fe(strconv.Itoa)
-	check(t, f2, 100, "100")
+	checkApplier(t, f2, 100, "100")
 
 	// java's instance method usecase like obj::Equals.
-	v := &eq{1}
-	f3 := fe(func(i int) bool { return v.Equals(i) })
-	check(t, f3, 1, true)
-	check(t, f3, 2, false)
+	c := &calc{1}
+	f3 := fe(c.Sub)
+	checkApplier(t, f3, 1, 0)
+	checkApplier(t, f3, 2, -1)
 }
 
-func checkNil[T any, U any](t *testing.T, f Applier[T, U]) {
+func checkApplierNil[T any, U any](t *testing.T, f Applier[T, U]) {
 	t.Helper()
 	if f != nil {
 		t.Error("f must be nil")
@@ -90,26 +94,26 @@ func checkNil[T any, U any](t *testing.T, f Applier[T, U]) {
 func TestCompose(t *testing.T) {
 	// java's f1.andThen(f2) or f1.compose(f2).
 	f1 := c(fe(strconv.Itoa), f(strconv.Atoi))
-	check(t, f1, 100, 100)
+	checkApplier(t, f1, 100, 100)
 
 	// java's f1.andThen(f2).andThen(f3).
 	f2 := c(fe(strconv.Itoa), c(f(strconv.Atoi), fe(strconv.Itoa)))
-	check(t, f2, 100, "100")
+	checkApplier(t, f2, 100, "100")
 	f3 := c(c(fe(strconv.Itoa), f(strconv.Atoi)), fe(strconv.Itoa))
-	check(t, f3, 100, "100")
+	checkApplier(t, f3, 100, "100")
 
-	checkNil(t, c(Applier[int, string](nil), f(strconv.Atoi)))
-	checkNil(t, c(fe(strconv.Itoa), Applier[string, int](nil)))
-	checkNil(t, c(fe(strconv.Itoa), c(Applier[string, int](nil), fe(strconv.Itoa))))
+	checkApplierNil(t, c(Applier[int, string](nil), f(strconv.Atoi)))
+	checkApplierNil(t, c(fe(strconv.Itoa), Applier[string, int](nil)))
+	checkApplierNil(t, c(fe(strconv.Itoa), c(Applier[string, int](nil), fe(strconv.Itoa))))
 
 	want := errors.New("foo")
 	f4 := c(f(strconv.Atoi), f(func(int) (int, error) { return 0, want }))
-	checkError(t, f4, "100", want)
+	checkApplierError(t, f4, "100", want)
 	f5 := c(f(func(int) (int, error) { return 0, want }), fe(strconv.Itoa))
-	checkError(t, f5, 100, want)
+	checkApplierError(t, f5, 100, want)
 }
 
 func TestIdentity(t *testing.T) {
 	f := Identity[int]()
-	check(t, f, 100, 100)
+	checkApplier(t, f, 100, 100)
 }

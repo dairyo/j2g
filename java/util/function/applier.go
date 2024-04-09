@@ -3,8 +3,8 @@ package function
 /**
 This is a port of java.util.function.Function.
 
-https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html
-https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/function/Function.java
+* https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html
+* https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/function/Function.java
 */
 
 import (
@@ -44,7 +44,7 @@ func NewApplierFuncWithNoError[T any, U any](f func(T) U) Applier[T, U] {
 
 // Compose composes two functions.
 // Returned value from first function becomes input to second function.
-// Compose returns nil if one of or all of inputted functions are nil.
+// Compose returns nil if one of or both of inputted functions are nil.
 // This is a replacement of java Function's andThen and compose methods.
 func Compose[T any, U any, V any](f1 Applier[T, U], f2 Applier[U, V]) Applier[T, V] {
 	if f1 == nil {
