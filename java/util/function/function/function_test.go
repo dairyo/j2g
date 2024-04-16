@@ -10,7 +10,7 @@ func c[T any, U any, V any](f1 Function[T, U], f2 Function[U, V]) Function[T, V]
 	return Compose(f1, f2)
 }
 
-func ne[T any, U any](f func(in T) U) Function[T, U] {
+func wne[T any, U any](f func(in T) U) Function[T, U] {
 	return WrapNoErrFunc(f)
 }
 
@@ -48,7 +48,7 @@ func (c *calc) Sub(i int) int {
 	return c.i - i
 }
 
-func TestNewFunctionFunc(t *testing.T) {
+func TestFunction(t *testing.T) {
 	// java's t -> t + 1
 	f1 := func(i int) (int, error) { return i + 1, nil }
 	checkFunction(t, f1, 1, 2)
@@ -64,20 +64,25 @@ func TestNewFunctionFunc(t *testing.T) {
 	checkFunction(t, f3, 2, 3)
 }
 
-func TestNewFunctionFuncWithNoError(t *testing.T) {
+func TestWrapNoErrFunc(t *testing.T) {
 	// java's i -> i + 1
-	f1 := ne(func(i int) int { return i + 1 })
+	f1 := wne(func(i int) int { return i + 1 })
 	checkFunction(t, f1, 1, 2)
 
 	// java's static method usecase like Integer::parseInt.
-	f2 := ne((strconv.Itoa))
+	f2 := wne((strconv.Itoa))
 	checkFunction(t, f2, 100, "100")
 
 	// java's instance method usecase like obj::Equals.
 	c := &calc{1}
-	f3 := ne((c.Sub))
+	f3 := wne((c.Sub))
 	checkFunction(t, f3, 1, 0)
 	checkFunction(t, f3, 2, -1)
+
+	f4 := WrapNoErrFunc((func(int) int)(nil))
+	if f4 != nil {
+		t.Error("f4 must be nil.")
+	}
 }
 
 func checkFunctionNil[T any, U any](t *testing.T, f Function[T, U]) {
@@ -89,23 +94,23 @@ func checkFunctionNil[T any, U any](t *testing.T, f Function[T, U]) {
 
 func TestCompose(t *testing.T) {
 	// java's f1.andThen(f2) or f1.compose(f2).
-	f1 := c(ne(strconv.Itoa), strconv.Atoi)
+	f1 := c(wne(strconv.Itoa), strconv.Atoi)
 	checkFunction(t, f1, 100, 100)
 
 	// java's f1.andThen(f2).andThen(f3).
-	f2 := c(ne(strconv.Itoa), c(strconv.Atoi, ne(strconv.Itoa)))
+	f2 := c(wne(strconv.Itoa), c(strconv.Atoi, wne(strconv.Itoa)))
 	checkFunction(t, f2, 100, "100")
-	f3 := c(c(ne(strconv.Itoa), strconv.Atoi), ne(strconv.Itoa))
+	f3 := c(c(wne(strconv.Itoa), strconv.Atoi), wne(strconv.Itoa))
 	checkFunction(t, f3, 100, "100")
 
 	checkFunctionNil(t, c(Function[int, string](nil), strconv.Atoi))
-	checkFunctionNil(t, c(ne(strconv.Itoa), Function[string, int](nil)))
-	checkFunctionNil(t, c(ne(strconv.Itoa), c(Function[string, int](nil), ne(strconv.Itoa))))
+	checkFunctionNil(t, c(wne(strconv.Itoa), Function[string, int](nil)))
+	checkFunctionNil(t, c(wne(strconv.Itoa), c(Function[string, int](nil), wne(strconv.Itoa))))
 
 	want := errors.New("foo")
 	f4 := c(strconv.Atoi, func(int) (int, error) { return 0, want })
 	checkFunctionError(t, f4, "100", want)
-	f5 := c(func(int) (int, error) { return 0, want }, ne(strconv.Itoa))
+	f5 := c(func(int) (int, error) { return 0, want }, wne(strconv.Itoa))
 	checkFunctionError(t, f5, 100, want)
 }
 
