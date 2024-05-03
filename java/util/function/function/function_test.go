@@ -11,7 +11,7 @@ func c[T any, U any, V any](f1 Function[T, U], f2 Function[U, V]) Function[T, V]
 }
 
 func wne[T any, U any](f func(in T) U) Function[T, U] {
-	return WrapNoErrFunc(f)
+	return WrapNoErr(f)
 }
 
 func checkFunction[T any, U comparable](t *testing.T, f Function[T, U], in T, want U) {
@@ -64,7 +64,7 @@ func TestFunction(t *testing.T) {
 	checkFunction(t, f3, 2, 3)
 }
 
-func TestWrapNoErrFunc(t *testing.T) {
+func TestWrapNoErr(t *testing.T) {
 	// java's i -> i + 1
 	f1 := wne(func(i int) int { return i + 1 })
 	checkFunction(t, f1, 1, 2)
@@ -79,7 +79,7 @@ func TestWrapNoErrFunc(t *testing.T) {
 	checkFunction(t, f3, 1, 0)
 	checkFunction(t, f3, 2, -1)
 
-	f4 := WrapNoErrFunc((func(int) int)(nil))
+	f4 := WrapNoErr((func(int) int)(nil))
 	if f4 != nil {
 		t.Error("f4 must be nil.")
 	}

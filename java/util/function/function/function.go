@@ -11,10 +11,10 @@ This is a port of java.util.function.Function.
 // argument and produce one result and error.
 type Function[T any, U any] func(T) (U, error)
 
-// WrapNoErrFunc adjusts a function that accepts one argument and
-// produce one result to Function.
+// WrapNoErr adjusts a function that accepts one argument and produce
+// one result to Function.
 // If f is nil, this function returns nil.
-func WrapNoErrFunc[T any, U any](f func(in T) U) Function[T, U] {
+func WrapNoErr[T any, U any](f func(in T) U) Function[T, U] {
 	if f == nil {
 		return nil
 	}
