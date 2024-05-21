@@ -43,6 +43,21 @@ func TestCast(t *testing.T) {
 	}()
 
 	func() {
+		cast := Cast[io.Writer, *bytes.Buffer]()
+		if cast == nil {
+			t.Error("fail to create cast function.")
+			return
+		}
+		b := &bytes.Buffer{}
+		got := cast(b)
+		if got != b {
+			t.Error("fail to cast.")
+			return
+		}
+
+	}()
+
+	func() {
 		cast := Cast[*bytes.Buffer, io.Closer]()
 		if cast != nil {
 			t.Error("must return nil.")

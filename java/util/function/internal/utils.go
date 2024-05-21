@@ -14,6 +14,9 @@ func Cast[T any, U any]() func(T) U {
 		if tt.ConvertibleTo(ut) {
 			return func(in T) U { return reflect.ValueOf(in).Convert(ut).Interface().(U) }
 		}
+		if ut.Implements(tt) {
+			return func(in T) U { return reflect.ValueOf(in).Interface().(U) }
+		}
 	}
 	return nil
 }
