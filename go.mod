@@ -1,4 +1,4 @@
-module github.com/dairyo/j2g/java/util/function
+module github.com/dairyo/j2g
 
 go 1.21.3
 
