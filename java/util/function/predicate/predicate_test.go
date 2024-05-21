@@ -1,6 +1,9 @@
 package predicate
 
 import (
+	"bytes"
+	"errors"
+	"io"
 	"strings"
 	"testing"
 
@@ -187,4 +190,67 @@ func TestNewPredicates(t *testing.T) {
 		t.Error("must be nil")
 	}
 
+}
+
+type adjustChecker[T comparable] struct {
+	t    *testing.T
+	want T
+}
+
+func (c *adjustChecker[T]) do(in T) (bool, error) {
+	c.t.Helper()
+	if in != c.want {
+		c.t.Errorf("want=%#v, got=%#v", c.want, in)
+		return false, errors.New("invalid")
+	}
+	return true, nil
+}
+
+func checkAdjust[T any, U comparable](t *testing.T, in T, want U) {
+	t.Helper()
+	cc := &adjustChecker[U]{t, want}
+	f := Adjust[T, U](cc.do)
+	if f == nil {
+		t.Fatalf("should be nil.")
+
+	}
+	ok, err := f(in)
+	if err != nil {
+		t.Errorf("must not return error but: %s", err)
+		return
+	}
+	if !ok {
+		t.Error("must be true.")
+	}
+}
+
+type (
+	myString string
+	myInt    int
+)
+
+func TestAdjust(t *testing.T) {
+	checkAdjust(t, myString("mystring"), "mystring")
+	checkAdjust(t, "mystring", myString("mystring"))
+	checkAdjust(t, myInt(1), 1)
+	checkAdjust(t, 1, myInt(1))
+
+	f1 := func(b *bytes.Buffer) (bool, error) {
+		return true, nil
+	}
+	f2 := func(i io.Writer) (bool, error) {
+		_, ok := i.(*bytes.Buffer)
+		return ok, nil
+	}
+	f3 := And(f1, Adjust[*bytes.Buffer, io.Writer](f2))
+	if f3 == nil {
+		t.Error("must not be nil.")
+	}
+	ok, err := f3(&bytes.Buffer{})
+	if err != nil {
+		t.Fatalf("must not return err: %s", err)
+	}
+	if !ok {
+		t.Errorf("should return true.")
+	}
 }

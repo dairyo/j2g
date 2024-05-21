@@ -1,5 +1,7 @@
 package predicate
 
+import "github.com/dairyo/j2g/java/util/function/internal"
+
 /**
 This is a port of java.util.function.Predicate.
 
@@ -110,4 +112,44 @@ func Not[T any](t Predicate[T]) Predicate[T] {
 // instance is same or not.
 func ComparableEquals[T comparable](i T) Predicate[T] {
 	return WrapNoErr(func(j T) bool { return i == j })
+}
+
+// Adjust adjusts a function to other function.
+//
+// Adjust is mainly used in arguments of [And] and [Or]. For example:
+//
+//  	f1 := func(b *bytes.Buffer) (bool, error) {
+//  		return true, nil
+//  	}
+//  	f2 := func(i io.Writer) (bool, error) {
+//  		_, ok := i.(*bytes.Buffer)
+//  		return ok, nil
+//  	}
+//  	b := &bytes.Buffer{}
+//  	And(f1, Adjust[*bytes.Buffer, io.Writer](f2))(b)
+//
+// If U is an interface, T must implements U. If U is a type, T must
+// be convertible to U.
+//
+// This function might panic. We recommend you should write adjusting
+// function by your own like following:
+//
+//  	f1 := func(b *bytes.Buffer) (bool, error) {
+//  		return true, nil
+//  	}
+//  	f2 := func(i io.Writer) (bool, error) {
+//  		_, ok := i.(*bytes.Buffer)
+//  		return ok, nil
+//  	}
+//  	b := &bytes.Buffer{}
+//  	And(f1, func(b *bytes.Buffer) (bool, error) { return f2(b) })(b)
+func Adjust[T, U any](f func(U) (bool, error)) func(T) (bool, error) {
+	if f == nil {
+		return nil
+	}
+	cf := internal.Cast[T, U]()
+	if cf == nil {
+		return nil
+	}
+	return func(in T) (bool, error) { return f(cf(in)) }
 }
