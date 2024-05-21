@@ -1,6 +1,10 @@
 package consumer
 
-import "github.com/dairyo/j2g/java/util/function/internal"
+import (
+	"fmt"
+
+	"github.com/dairyo/j2g/java/util/function/internal"
+)
 
 /**
 This is a port of java.util.function.Consumer.
@@ -93,5 +97,11 @@ func Adjust[T, U any](f func(U) error) func(T) error {
 	if cf == nil {
 		return nil
 	}
-	return func(in T) error { return f(cf(in)) }
+	return func(in T) error {
+		u, err := cf(in)
+		if err != nil {
+			return fmt.Errorf("fail to cast from %T to %T: %w", in, u, err)
+		}
+		return f(u)
+	}
 }

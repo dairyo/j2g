@@ -26,7 +26,7 @@ func Cast[T any, U any]() func(T) (U, error) {
 		if tt.ConvertibleTo(ut) {
 			return func(in T) (U, error) { return cast[U](reflect.ValueOf(in).Convert(ut).Interface()) }
 		}
-		if ut.Implements(tt) {
+		if tt.Kind() == reflect.Interface && ut.Implements(tt) {
 			return func(in T) (U, error) { return cast[U](reflect.ValueOf(in).Interface()) }
 		}
 	}

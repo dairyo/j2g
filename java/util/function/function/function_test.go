@@ -129,7 +129,11 @@ func TestAdjust(t *testing.T) {
 		return w, nil
 	}
 	b1 := &bytes.Buffer{}
-	b2, err := Compose(f1, Adjust[*bytes.Buffer, io.Writer, *bytes.Buffer, io.Writer](f2))(b1)
+	c := Compose(f1, Adjust[*bytes.Buffer, io.Writer, *bytes.Buffer, io.Writer](f2))
+	if c == nil {
+		t.Fatalf("must not be nil.")
+	}
+	b2, err := c(b1)
 	if err != nil {
 		t.Fatalf("must not return err: %s", err)
 	}

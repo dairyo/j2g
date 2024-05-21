@@ -1,6 +1,10 @@
 package function
 
-import "github.com/dairyo/j2g/java/util/function/internal"
+import (
+	"fmt"
+
+	"github.com/dairyo/j2g/java/util/function/internal"
+)
 
 /**
 This is a port of java.util.function.Function.
@@ -102,10 +106,18 @@ func Adjust[T1, U1, T2, U2 any](f func(U1) (U2, error)) func(T1) (T2, error) {
 		return nil
 	}
 	return func(in T1) (T2, error) {
-		ret, err := f(cf1(in))
+		u1, err := cf1(in)
+		if err != nil {
+			return *new(T2), fmt.Errorf("fail to cast argument from %T to %T: %w", in, u1, err)
+		}
+		ret, err := f(u1)
 		if err != nil {
 			return *new(T2), err
 		}
-		return cf2(ret), nil
+		u2, err := cf2(ret)
+		if err != nil {
+			return *new(T2), fmt.Errorf("fail to cast return value from %T to %T: %w", ret, u2, err)
+		}
+		return u2, nil
 	}
 }
