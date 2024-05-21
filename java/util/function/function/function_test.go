@@ -1,7 +1,9 @@
 package function
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"strconv"
 	"testing"
 )
@@ -117,4 +119,21 @@ func TestCompose(t *testing.T) {
 func TestIdentity(t *testing.T) {
 	f := Identity[int]()
 	checkFunction(t, f, 100, 100)
+}
+
+func TestAdjust(t *testing.T) {
+	f1 := func(b *bytes.Buffer) (*bytes.Buffer, error) {
+		return b, nil
+	}
+	f2 := func(w io.Writer) (io.Writer, error) {
+		return w, nil
+	}
+	b1 := &bytes.Buffer{}
+	b2, err := Compose(f1, Adjust[*bytes.Buffer, io.Writer, *bytes.Buffer, io.Writer](f2))(b1)
+	if err != nil {
+		t.Fatalf("must not return err: %s", err)
+	}
+	if b1 != b2 {
+		t.Fatal("must be same.")
+	}
 }
