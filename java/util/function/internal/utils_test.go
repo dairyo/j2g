@@ -17,7 +17,10 @@ func checkCast[T any, U comparable](t *testing.T, in T, want U) {
 	if cast == nil {
 		t.Error("Cast returns nil.")
 	}
-	got := cast(in)
+	got, err := cast(in)
+	if err != nil {
+		t.Fatalf("must not return err: %s", err)
+	}
 	if want != got {
 		t.Errorf("want=%#v, got=%#v", want, got)
 	}
@@ -35,7 +38,10 @@ func TestCast(t *testing.T) {
 			t.Error("fail to create cast function.")
 			return
 		}
-		got := cast(&bytes.Buffer{})
+		got, err := cast(&bytes.Buffer{})
+		if err != nil {
+			t.Fatalf("must not return err: %s", err)
+		}
 		if got == nil {
 			t.Error("fail to cast.")
 			return
@@ -49,7 +55,10 @@ func TestCast(t *testing.T) {
 			return
 		}
 		b := &bytes.Buffer{}
-		got := cast(b)
+		got, err := cast(b)
+		if err != nil {
+			t.Fatalf("must not return err: %s", err)
+		}
 		if got != b {
 			t.Error("fail to cast.")
 			return
