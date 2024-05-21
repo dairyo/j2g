@@ -27,11 +27,12 @@ func WrapNoErr[T any](f func(in T)) Consumer[T] {
 	}
 }
 
-// Compose returns a Consumer composed by arguments. The composed
-// Consumer evaluates Consumers passed as arguments. The order of
-// evaluating Consumers is as the same as the order of arguments.  If
-// preceding Consumers return error, rest of the Consumers are not
-// evaluated.
+// Compose returns a Consumer composing arguments.
+//
+// The composed Consumer evaluates Consumers passed as arguments. The
+// order of evaluating Consumers is as the same as the order of
+// arguments. If preceding Consumers return error, rest of the
+// Consumers are not evaluated.
 func Compose[T any](c1 Consumer[T], c2 ...Consumer[T]) Consumer[T] {
 	if c1 == nil {
 		return nil
