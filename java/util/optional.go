@@ -1,9 +1,7 @@
-/**
-This is a port of java.util.Optional.
-
-* https://docs.oracle.com/javase/jp/21/docs/api/java.base/java/util/Optional.html
-* https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/Optional.java
-*/
+// This is a port of java.util.Optional.
+//
+//   - https://docs.oracle.com/javase/jp/21/docs/api/java.base/java/util/Optional.html
+//   - https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/Optional.java
 package util
 
 import (
@@ -79,6 +77,12 @@ func (o *Optional[T]) Filter(p predicate.Predicate[T]) *Optional[T] {
 	return o.o.Filter(p)
 }
 
+// Or returns this Optional instance if the value of this Optional is
+// present. Otherwise returns an Optional produced by
+// [supplier.Supplier] s. Or returns empty Optional in following
+// cases:
+//   - [supplier.Supplier] s is Nil. In this case, [Optional.Error] returns [ErrNilSupplier]
+//   - [supplier.Supplier] s returns error. In this case [Optional.Error] returns an error which contains [ErrSupplierErr], error returned by [supplier.Supplier] and error which is contained by base empty Optional.
 func (o *Optional[T]) Or(s supplier.Supplier[*Optional[T]]) *Optional[T] {
 	return o.o.Or(s)
 }
