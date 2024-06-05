@@ -54,8 +54,8 @@ func (o *valueOptional[T]) Or(s supplier.Supplier[*Optional[T]]) *Optional[T] {
 	return o.parent
 }
 
-func (o *valueOptional[T]) Get() T {
-	return o.val
+func (o *valueOptional[T]) Get() (T, error) {
+	return o.val, nil
 }
 
 func (o *valueOptional[T]) Error() error {

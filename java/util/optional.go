@@ -21,7 +21,7 @@ type optional[T any] interface {
 	IfPresentOrElse(consumer.Consumer[T], runnable.Runnable) error
 	Filter(predicate.Predicate[T]) *Optional[T]
 	Or(supplier.Supplier[*Optional[T]]) *Optional[T]
-	Get() T
+	Get() (T, error)
 	IsPresent() bool
 	IsEmpty() bool
 	Error() error
@@ -34,7 +34,6 @@ type Optional[T any] struct {
 
 // IfPresent executes [consumer.Consumer] c if [Optional.IsPresent]
 // returns true. IfPresent may return following errors:
-//
 //   - [ErrNoValue] is returned if [Optional.IsPresent] returns false.
 //   - [ErrNilConsumer] is returned if c is nil if [Optional.IsPresent]
 //   returns true and c is nil.
@@ -47,7 +46,6 @@ func (o *Optional[T]) IfPresent(c consumer.Consumer[T]) error {
 // [Optional.IsPresent] returns true. It executes runnable.Runnable r
 // if [Optional.IsPresent] returns false. IfPresent may return
 // following errors:
-//
 //   - [ErrNilRunnable] is returned if [Optional.IsPresent] is false and
 //   r is nil.
 //   - [ErrNilConsumer] is returned if c is nil if [Optional.IsPresent]
@@ -87,14 +85,20 @@ func (o *Optional[T]) Or(s supplier.Supplier[*Optional[T]]) *Optional[T] {
 	return o.o.Or(s)
 }
 
-func (o *Optional[T]) Get() T {
+// Get returns a value in this Optional instance if
+// [Optional.IsPresent] is true. Otherwise Get returns [ErrNoValue].
+func (o *Optional[T]) Get() (T, error) {
 	return o.o.Get()
 }
 
+// IsPresent returns true if this Optional instance has a
+// value. Otherwise return false.
 func (o *Optional[T]) IsPresent() bool {
 	return o.o.IsPresent()
 }
 
+// IsEmpty returns true if this Optional instance does not have a
+// value. Otherwise return true.
 func (o *Optional[T]) IsEmpty() bool {
 	return o.o.IsEmpty()
 }
