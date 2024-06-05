@@ -9,7 +9,8 @@ import (
 func cast[T any](i any) (T, error) {
 	ret, ok := i.(T)
 	if !ok {
-		return *new(T), function.ErrFailToCast
+		var zero T
+		return zero, function.ErrFailToCast
 	}
 	return ret, nil
 }

@@ -54,7 +54,8 @@ func (e *errorOptional[T]) Error() error {
 }
 
 func (e *errorOptional[T]) Get() T {
-	return *new(T)
+	var zero T
+	return zero
 }
 
 func (e *errorOptional[T]) Or(s supplier.Supplier[*Optional[T]]) *Optional[T] {

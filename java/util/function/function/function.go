@@ -41,7 +41,8 @@ func Compose[T any, U any, V any](f1 Function[T, U], f2 Function[U, V]) Function
 	return (func(t T) (V, error) {
 		u, err := f1(t)
 		if err != nil {
-			return *new(V), err
+			var zero V
+			return zero, err
 		}
 		return f2(u)
 	})
@@ -108,15 +109,18 @@ func Adjust[T1, U1, T2, U2 any](f func(U1) (U2, error)) func(T1) (T2, error) {
 	return func(in T1) (T2, error) {
 		u1, err := cf1(in)
 		if err != nil {
-			return *new(T2), fmt.Errorf("fail to cast argument from %T to %T: %w", in, u1, err)
+			var zero T2
+			return zero, fmt.Errorf("fail to cast argument from %T to %T: %w", in, u1, err)
 		}
 		ret, err := f(u1)
 		if err != nil {
-			return *new(T2), err
+			var zero T2
+			return zero, err
 		}
 		u2, err := cf2(ret)
 		if err != nil {
-			return *new(T2), fmt.Errorf("fail to cast return value from %T to %T: %w", ret, u2, err)
+			var zero T2
+			return zero, fmt.Errorf("fail to cast return value from %T to %T: %w", ret, u2, err)
 		}
 		return u2, nil
 	}
