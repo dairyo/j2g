@@ -121,6 +121,8 @@ func isNilable(k reflect.Kind) bool {
 	}
 }
 
+// NewOptional returns an [Optional] instance holding value v.
+// If v is nil, NewOptional returns empty [Optional].
 func NewOptional[T any](v T) *Optional[T] {
 	rv := reflect.ValueOf(v)
 	vt := rv.Type()
@@ -136,6 +138,11 @@ func NewOptional[T any](v T) *Optional[T] {
 	return ret
 }
 
+// Map returns new [Optional] instance holding the result of applying
+// the given mapping function f.
+// If v is empty or nil NewOptional returns empty [Optional]
+// instance. NewOptional also returns empty [Optional] instance if f
+// is nil.
 func Map[T, U any](v *Optional[T], f function.Function[T, U]) *Optional[U] {
 	if v == nil {
 		return newErr[U](ErrMapNilOptinal)
