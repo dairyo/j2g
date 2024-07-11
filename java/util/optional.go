@@ -36,7 +36,7 @@ type Optional[T any] struct {
 // returns true. IfPresent may return following errors:
 //   - [ErrNoValue] is returned if [Optional.IsPresent] returns false.
 //   - [ErrNilConsumer] is returned if c is nil if [Optional.IsPresent]
-//   returns true and c is nil.
+//     returns true and c is nil.
 //   - error returned by c is returned if c returns error.
 func (o *Optional[T]) IfPresent(c consumer.Consumer[T]) error {
 	return o.o.IfPresent(c)
@@ -47,13 +47,13 @@ func (o *Optional[T]) IfPresent(c consumer.Consumer[T]) error {
 // if [Optional.IsPresent] returns false. IfPresent may return
 // following errors:
 //   - [ErrNilRunnable] is returned if [Optional.IsPresent] is false and
-//   r is nil.
+//     r is nil.
 //   - [ErrNilConsumer] is returned if c is nil if [Optional.IsPresent]
-//   is true and c is nil.
+//     is true and c is nil.
 //   - error returned by r is returned if [Optional.IsPresent] is
-//   false and r returns error.
+//     false and r returns error.
 //   - error returned by c is returned if [Optional.IsPresent] is
-//   true and c returns error.
+//     true and c returns error.
 func (o *Optional[T]) IfPresentOrElse(c consumer.Consumer[T], r runnable.Runnable) error {
 	return o.o.IfPresentOrElse(c, r)
 }
@@ -67,10 +67,10 @@ func (o *Optional[T]) IfPresentOrElse(c consumer.Consumer[T], r runnable.Runnabl
 //   - [ErrNilPredicate] is returned if [predicate.Predicate] p is nil.
 //   - [ErrPredicateFailed] is returned if [predicate.Predicate] p returns false.
 //   - [ErrPredicateErr] is returned if [predicate.Predicate] p
-//   returns error. In this case, the error returned by P is joined
-//   with [errors.Join].
+//     returns error. In this case, the error returned by P is joined
+//     with [errors.Join].
 //   - If Optional instance calling Filter is already empty,
-//   [Optional.Error] returns the original error.
+//     [Optional.Error] returns the original error.
 func (o *Optional[T]) Filter(p predicate.Predicate[T]) *Optional[T] {
 	return o.o.Filter(p)
 }
@@ -157,7 +157,7 @@ func Map[T, U any](v *Optional[T], f function.Function[T, U]) *Optional[U] {
 	case *valueOptional[T]:
 		ret, err := f(val.val)
 		if err != nil {
-			return newErr[U](fmt.Errorf("function returns err: %w", err))
+			return newErr[U](fmt.Errorf("function returns error: %w", err))
 		}
 		return NewOptional(ret)
 	default:
@@ -179,7 +179,7 @@ func FlatMap[T, U any](v *Optional[T], f function.Function[T, *Optional[U]]) *Op
 	case *valueOptional[T]:
 		ret, err := f(val.val)
 		if err != nil {
-			return newErr[U](fmt.Errorf("function returns err: %w", err))
+			return newErr[U](fmt.Errorf("function returns error: %w", err))
 		}
 		return ret
 	default:
