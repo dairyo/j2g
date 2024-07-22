@@ -144,45 +144,39 @@ func NewOptional[T any](v T) *Optional[T] {
 // instance. NewOptional also returns empty [Optional] instance if f
 // is nil.
 func Map[T, U any](v *Optional[T], f function.Function[T, U]) *Optional[U] {
-	if v == nil {
-		return newErr[U](ErrMapNilOptinal)
+	ret, err := innerMap(v, f)
+	if err != nil {
+		return newErr[U](err)
 	}
-	if f == nil {
-		return newErr[U](ErrMapNilFunction)
-	}
-
-	switch val := v.o.(type) {
-	case *errorOptional[T]:
-		return newErr[U](fmt.Errorf("invalid optional is passed: %w", val.err))
-	case *valueOptional[T]:
-		ret, err := f(val.val)
-		if err != nil {
-			return newErr[U](fmt.Errorf("function returns error: %w", err))
-		}
-		return NewOptional(ret)
-	default:
-		return newErr[U](errors.New("unknown Optional type"))
-	}
+	return NewOptional(ret)
 }
 
 func FlatMap[T, U any](v *Optional[T], f function.Function[T, *Optional[U]]) *Optional[U] {
+	ret, err := innerMap(v, f)
+	if err != nil {
+		return newErr[U](err)
+	}
+	return ret
+}
+
+func innerMap[T, U any](v *Optional[T], f function.Function[T, U]) (U, error) {
 	if v == nil {
-		return newErr[U](ErrMapNilOptinal)
+		return *new(U), ErrMapNilOptinal
 	}
 	if f == nil {
-		return newErr[U](ErrMapNilFunction)
+		return *new(U), ErrMapNilFunction
 	}
 
 	switch val := v.o.(type) {
 	case *errorOptional[T]:
-		return newErr[U](fmt.Errorf("invalid optional is passed: %w", val.err))
+		return *new(U), fmt.Errorf("invalid optional is passed: %w", val.err)
 	case *valueOptional[T]:
 		ret, err := f(val.val)
 		if err != nil {
-			return newErr[U](fmt.Errorf("function returns error: %w", err))
+			return *new(U), fmt.Errorf("function returns error: %w", err)
 		}
-		return ret
+		return ret, nil
 	default:
-		return newErr[U](errors.New("unknown Optional type"))
+		return *new(U), errors.New("unknown Optional type")
 	}
 }
