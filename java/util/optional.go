@@ -151,6 +151,11 @@ func Map[T, U any](v *Optional[T], f function.Function[T, U]) *Optional[U] {
 	return NewOptional(ret)
 }
 
+// FlatMap returns new [Optional] instance which is a returned value
+// of the given mapping function f.
+// If v is empty or nil NewOptional returns empty [Optional]
+// instance. NewOptional also returns empty [Optional] instance if f
+// is nil.
 func FlatMap[T, U any](v *Optional[T], f function.Function[T, *Optional[U]]) *Optional[U] {
 	ret, err := innerMap(v, f)
 	if err != nil {
