@@ -82,3 +82,31 @@ func TestMap(t *testing.T) {
 		}
 	})
 }
+
+func TestFlatMap(t *testing.T) {
+	atoi := func(s string) (*Optional[int], error) {
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			return nil, err
+		}
+		return NewOptional(i), nil
+	}
+
+	t.Run("string to int", func(t *testing.T) {
+		i := NewOptional("1")
+		checkNotEmpty(t, i)
+		o := FlatMap(i, atoi)
+		checkNotEmpty(t, o)
+		checkGet(t, o, 1)
+	})
+
+	t.Run("argument Optional is nil", func(t *testing.T) {
+		i := (*Optional[string])(nil)
+		o := FlatMap(i, atoi)
+		got := o.Error()
+		if !errors.Is(got, ErrMapNilOptinal) {
+			t.Fatalf("want=%s, got=%s", ErrMapNilOptinal, got)
+		}
+	})
+
+}
