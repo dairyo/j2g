@@ -110,3 +110,74 @@ func TestFlatMap(t *testing.T) {
 	})
 
 }
+
+type consumerCalled[T comparable] struct {
+	t      *testing.T
+	want   T
+	called bool
+	err    error
+}
+
+func (c *consumerCalled[T]) consume(got T) error {
+	c.t.Helper()
+	c.called = true
+	if got != c.want {
+		c.t.Errorf("want=%v, got=%v", c.want, got)
+	}
+	return c.err
+}
+
+func (c *consumerCalled[T]) checkCalled() {
+	c.t.Helper()
+	if !c.called {
+		c.t.Error("not called")
+	}
+}
+
+func (c *consumerCalled[T]) checkNotCalled() {
+	c.t.Helper()
+	if c.called {
+		c.t.Error("should not called")
+	}
+}
+
+func TestIfPresent(t *testing.T) {
+	t.Run("not empty success", func(t *testing.T) {
+		c := &consumerCalled[int]{t: t, want: 1}
+		i := NewOptional(1)
+		err := i.IfPresent(c.consume)
+		c.checkCalled()
+		if err != nil {
+			t.Errorf("should not return error but %q.", err)
+		}
+	})
+
+	t.Run("no consumer", func(t *testing.T) {
+		i := NewOptional(1)
+		err := i.IfPresent((func(int) error)(nil))
+		if err != ErrNilConsumer {
+			t.Errorf("should return %q, but %q.", ErrNilConsumer, err)
+		}
+	})
+
+	t.Run("not empty error", func(t *testing.T) {
+		want := errors.New("foo")
+		c := &consumerCalled[int]{t: t, want: 1, err: want}
+		i := NewOptional(1)
+		err := i.IfPresent(c.consume)
+		c.checkCalled()
+		if err != want {
+			t.Errorf("should return foo but %q.", err)
+		}
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		c := &consumerCalled[*int]{t: t, want: nil}
+		i := NewOptional[*int](nil)
+		err := i.IfPresent(c.consume)
+		c.checkNotCalled()
+		if err != ErrNoValue {
+			t.Errorf("should return %q but %q.", ErrNoValue, err)
+		}
+	})
+}
