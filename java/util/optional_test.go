@@ -111,39 +111,9 @@ func TestFlatMap(t *testing.T) {
 
 }
 
-type consumerCalled[T comparable] struct {
-	t      *testing.T
-	want   T
-	called bool
-	err    error
-}
-
-func (c *consumerCalled[T]) consume(got T) error {
-	c.t.Helper()
-	c.called = true
-	if got != c.want {
-		c.t.Errorf("want=%v, got=%v", c.want, got)
-	}
-	return c.err
-}
-
-func (c *consumerCalled[T]) checkCalled() {
-	c.t.Helper()
-	if !c.called {
-		c.t.Error("not called")
-	}
-}
-
-func (c *consumerCalled[T]) checkNotCalled() {
-	c.t.Helper()
-	if c.called {
-		c.t.Error("should not called")
-	}
-}
-
 func TestIfPresent(t *testing.T) {
 	t.Run("not empty success", func(t *testing.T) {
-		c := &consumerCalled[int]{t: t, want: 1}
+		c := newConsumerCalled(t, 1, nil)
 		i := NewOptional(1)
 		err := i.IfPresent(c.consume)
 		c.checkCalled()
@@ -162,7 +132,7 @@ func TestIfPresent(t *testing.T) {
 
 	t.Run("not empty error", func(t *testing.T) {
 		want := errors.New("foo")
-		c := &consumerCalled[int]{t: t, want: 1, err: want}
+		c := newConsumerCalled(t, 1, want)
 		i := NewOptional(1)
 		err := i.IfPresent(c.consume)
 		c.checkCalled()
@@ -172,7 +142,7 @@ func TestIfPresent(t *testing.T) {
 	})
 
 	t.Run("empty", func(t *testing.T) {
-		c := &consumerCalled[*int]{t: t, want: nil}
+		c := newConsumerCalled[*int](t, nil, nil)
 		i := NewOptional[*int](nil)
 		err := i.IfPresent(c.consume)
 		c.checkNotCalled()
