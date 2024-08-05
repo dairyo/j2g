@@ -63,32 +63,33 @@ func Compose[T any](c1 Consumer[T], c2 ...Consumer[T]) Consumer[T] {
 //
 // Adjust is mainly used in arguments of [Compose]. For example:
 //
-//  	f1 := func(b *bytes.Buffer) error {
-//  		b.WriteString("foo")
-//  		return nil
-//  	}
-//  	f2 := func(w io.Writer) error {
-//  		w.Write([]byte("bar"))
-//  		return nil
-//  	}
-//  	b := &bytes.Buffer{}
-//  	Compose[*bytes.Buffer](f1, Adjust[*bytes.Buffer, io.Writer](f2))(b)
+//	f1 := func(b *bytes.Buffer) error {
+//		b.WriteString("foo")
+//		return nil
+//	}
+//	f2 := func(w io.Writer) error {
+//		w.Write([]byte("bar"))
+//		return nil
+//	}
+//	b := &bytes.Buffer{}
+//	Compose[*bytes.Buffer](f1, Adjust[*bytes.Buffer, io.Writer](f2))(b)
+//
 // If U is an interface, T must implements U. If U is a type, T must
 // be convertible to U.
 //
 // This function might panic. We recommend you should write adjusting
 // function by your own like following:
 //
-//  	f1 := func(b *bytes.Buffer) error {
-//  		b.WriteString("foo")
-//  		return nil
-//  	}
-//  	f2 := func(w io.Writer) error {
-//  		w.Write([]byte("bar"))
-//  		return nil
-//  	}
-//  	b := &bytes.Buffer{}
-//  	Compose[*bytes.Buffer](f1, func(in *bytes.Buffer) error { return f2(in) })(b)
+//	f1 := func(b *bytes.Buffer) error {
+//		b.WriteString("foo")
+//		return nil
+//	}
+//	f2 := func(w io.Writer) error {
+//		w.Write([]byte("bar"))
+//		return nil
+//	}
+//	b := &bytes.Buffer{}
+//	Compose[*bytes.Buffer](f1, func(in *bytes.Buffer) error { return f2(in) })(b)
 func Adjust[T, U any](f func(U) error) func(T) error {
 	if f == nil {
 		return nil
