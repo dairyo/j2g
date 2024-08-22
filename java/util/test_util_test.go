@@ -3,26 +3,26 @@ package util
 import "testing"
 
 type called struct {
-	t      *testing.T
-	called bool
-	err    error
+	t        *testing.T
+	isCalled bool
+	err      error
 }
 
 func (c *called) f() error {
-	c.called = true
+	c.isCalled = true
 	return c.err
 }
 
 func (c *called) checkCalled() {
 	c.t.Helper()
-	if !c.called {
+	if !c.isCalled {
 		c.t.Error("not called")
 	}
 }
 
 func (c *called) checkNotCalled() {
 	c.t.Helper()
-	if c.called {
+	if c.isCalled {
 		c.t.Error("should not called")
 	}
 }
@@ -37,9 +37,22 @@ func newConsumerCalled[T comparable](t *testing.T, want T, err error) *consumerC
 }
 
 func (c *consumerCalled[T]) consume(got T) error {
-	c.called.t.Helper()
+	c.t.Helper()
 	if got != c.want {
 		c.t.Errorf("want=%v, got=%v", c.want, got)
 	}
 	return c.f()
+}
+
+type runnableCalled struct {
+	called
+}
+
+func newRunnableCalled(t *testing.T, err error) *runnableCalled {
+	return &runnableCalled{called{t, false, err}}
+}
+
+func (r *runnableCalled) run() error {
+	r.t.Helper()
+	return r.f()
 }

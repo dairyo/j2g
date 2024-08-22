@@ -135,19 +135,68 @@ func TestIfPresent(t *testing.T) {
 		c := newConsumerCalled(t, 1, want)
 		i := NewOptional(1)
 		err := i.IfPresent(c.consume)
-		c.checkCalled()
 		if err != want {
 			t.Errorf("should return foo but %q.", err)
 		}
+		c.checkCalled()
 	})
 
 	t.Run("empty", func(t *testing.T) {
 		c := newConsumerCalled[*int](t, nil, nil)
 		i := NewOptional[*int](nil)
 		err := i.IfPresent(c.consume)
-		c.checkNotCalled()
 		if err != ErrNoValue {
 			t.Errorf("should return %q but %q.", ErrNoValue, err)
 		}
+		c.checkNotCalled()
+	})
+}
+
+func TestIfPresentOrElse(t *testing.T) {
+	t.Run("present", func(t *testing.T) {
+		i := NewOptional(1)
+		c := newConsumerCalled(t, 1, nil)
+		r := newRunnableCalled(t, nil)
+		err := i.IfPresentOrElse(c.consume, r.run)
+		if err != nil {
+			t.Errorf("should not return error but %q.", err)
+		}
+		c.checkCalled()
+		r.checkNotCalled()
+	})
+
+	t.Run("not present and runnable is nil ", func(t *testing.T) {
+		i := NewOptional[*int](nil)
+		c := newConsumerCalled[*int](t, nil, nil)
+		err := i.IfPresentOrElse(c.consume, nil)
+		if err != ErrInvalidUsed {
+			t.Errorf("should return ErrInvalidUsed but %q.", err)
+		}
+		c.checkNotCalled()
+	})
+
+	t.Run("not present and runnable success", func(t *testing.T) {
+		i := NewOptional[*int](nil)
+		c := newConsumerCalled[*int](t, nil, nil)
+		r := newRunnableCalled(t, nil)
+		err := i.IfPresentOrElse(c.consume, r.run)
+		if err != nil {
+			t.Errorf("should not return error but %q.", err)
+		}
+		c.checkNotCalled()
+		r.checkCalled()
+	})
+
+	t.Run("not present and runnable returns error", func(t *testing.T) {
+		i := NewOptional[*int](nil)
+		c := newConsumerCalled[*int](t, nil, nil)
+		want := errors.New("foo")
+		r := newRunnableCalled(t, want)
+		err := i.IfPresentOrElse(c.consume, r.run)
+		if err != want {
+			t.Errorf("should not return error but %q.", err)
+		}
+		c.checkNotCalled()
+		r.checkCalled()
 	})
 }
