@@ -38,11 +38,11 @@ func (o *valueOptional[T]) Filter(p predicate.Predicate[T]) *Optional[T] {
 		return newErr[T](ErrNilPredicate)
 	}
 	ok, err := p(o.val)
-	if !ok {
-		return newErr[T](ErrPredicateFailed)
-	}
 	if err != nil {
 		return newErr[T](errors.Join(ErrPredicateErr, err))
+	}
+	if !ok {
+		return newErr[T](ErrPredicateFailed)
 	}
 	return o.parent
 }

@@ -200,3 +200,61 @@ func TestIfPresentOrElse(t *testing.T) {
 		r.checkCalled()
 	})
 }
+
+func TestFilter(t *testing.T) {
+	t.Run("match", func(t *testing.T) {
+		s := NewOptional("foo")
+		filtered := s.Filter(func(_ string) (bool, error) { return true, nil })
+		if s != filtered {
+			got, _ := filtered.Get()
+			t.Errorf("should match but not: %q, %q.", "foo", got)
+		}
+	})
+
+	t.Run("not match", func(t *testing.T) {
+		s := NewOptional("foo")
+		filtered := s.Filter(func(_ string) (bool, error) { return false, nil })
+		got := filtered.Error()
+		if got != ErrPredicateFailed {
+			t.Errorf("should return ErrPredicateFailed but %q.", got)
+		}
+	})
+
+	t.Run("predicate is nil", func(t *testing.T) {
+		s := NewOptional("foo")
+		filtered := s.Filter((func(_ string) (bool, error))(nil))
+		got := filtered.Error()
+		if got != ErrNilPredicate {
+			t.Errorf("should return ErrNilPredicate but %q.", got)
+		}
+	})
+
+	t.Run("predicate returns error", func(t *testing.T) {
+		s := NewOptional("foo")
+		want := errors.New("bar")
+		filtered := s.Filter(func(_ string) (bool, error) { return false, want })
+		err := filtered.Error()
+		unwrap, ok := err.(interface{ Unwrap() []error })
+		if !ok {
+			t.Error("error should wrap.")
+		}
+		errs := unwrap.Unwrap()
+		if len(errs) != 2 {
+			t.Errorf("error must be 2 but %d.", len(errs))
+		}
+		if !errors.Is(err, want) {
+			t.Errorf("error must contain %q but %q.", want, err)
+		}
+		if !errors.Is(err, ErrPredicateErr) {
+			t.Errorf("error must contain %q but %q.", ErrPredicateErr, err)
+		}
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		s := NewOptional[*string](nil)
+		filtered := s.Filter(func(_ *string) (bool, error) { return true, nil })
+		if s != filtered {
+			t.Errorf("filtered must be same %#v, %#v", s, filtered)
+		}
+	})
+}
