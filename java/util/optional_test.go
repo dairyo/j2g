@@ -258,3 +258,124 @@ func TestFilter(t *testing.T) {
 		}
 	})
 }
+
+func TestOr(t *testing.T) {
+	t.Run("has value", func(t *testing.T) {
+		s := NewOptional("foo")
+		supplied := s.Or(func() (*Optional[string], error) {
+			return NewOptional("bar"), nil
+		})
+		if s != supplied {
+			got, _ := supplied.Get()
+			t.Errorf("should match but not: %q, %q.", "foo", got)
+		}
+	})
+
+	t.Run("has value and nil supplier", func(t *testing.T) {
+		s := NewOptional("foo")
+		supplied := s.Or((func() (*Optional[string], error))(nil))
+		want := supplied.Error()
+		if want != ErrNilSupplier {
+			t.Errorf("want=%q, got=%q", ErrNilSupplier, want)
+		}
+	})
+
+	t.Run("not have value", func(t *testing.T) {
+		s := NewOptional[*string](nil)
+		supplied := s.Or(func() (*Optional[*string], error) {
+			str := "bar"
+			return NewOptional(&str), nil
+		})
+		got, err := supplied.Get()
+		if err != nil {
+			t.Errorf("Get does not return error but %q.", err)
+		}
+		if *got != "bar" {
+			t.Errorf("want=%q, got=%q.", "bar", *got)
+		}
+	})
+
+	t.Run("not have value and nil supplier", func(t *testing.T) {
+		s := NewOptional[*string](nil)
+		supplied := s.Or((func() (*Optional[*string], error))(nil))
+		err := supplied.Error()
+		unwrap, ok := err.(interface{ Unwrap() []error })
+		if !ok {
+			t.Error("error should wrap.")
+		}
+		errs := unwrap.Unwrap()
+		if len(errs) != 2 {
+			t.Errorf("error must be 2 but %d.", len(errs))
+		}
+		if !errors.Is(err, ErrEmpty) {
+			t.Errorf("error must contain %q but %q.", ErrEmpty, err)
+		}
+		if !errors.Is(err, ErrNilSupplier) {
+			t.Errorf("error must contain %q but %q.", ErrNilSupplier, err)
+		}
+	})
+
+	t.Run("not have value and nil supplier", func(t *testing.T) {
+		s := NewOptional[*string](nil)
+		supplied := s.Or((func() (*Optional[*string], error))(nil))
+		err := supplied.Error()
+		unwrap, ok := err.(interface{ Unwrap() []error })
+		if !ok {
+			t.Error("error should wrap.")
+		}
+		errs := unwrap.Unwrap()
+		if len(errs) != 2 {
+			t.Errorf("error must be 2 but %d.", len(errs))
+		}
+		if !errors.Is(err, ErrEmpty) {
+			t.Errorf("error must contain %q but %q.", ErrEmpty, err)
+		}
+		if !errors.Is(err, ErrNilSupplier) {
+			t.Errorf("error must contain %q but %q.", ErrNilSupplier, err)
+		}
+	})
+
+	t.Run("not have value and nil supplier", func(t *testing.T) {
+		s := NewOptional[*string](nil)
+		supplied := s.Or((func() (*Optional[*string], error))(nil))
+		err := supplied.Error()
+		unwrap, ok := err.(interface{ Unwrap() []error })
+		if !ok {
+			t.Error("error should wrap.")
+		}
+		errs := unwrap.Unwrap()
+		if len(errs) != 2 {
+			t.Errorf("error must be 2 but %d.", len(errs))
+		}
+		if !errors.Is(err, ErrEmpty) {
+			t.Errorf("error must contain %q but %q.", ErrEmpty, err)
+		}
+		if !errors.Is(err, ErrNilSupplier) {
+			t.Errorf("error must contain %q but %q.", ErrNilSupplier, err)
+		}
+	})
+
+	t.Run("not have value and supplier returns nil", func(t *testing.T) {
+		s := NewOptional[*string](nil)
+		want := errors.New("foo")
+		supplied := s.Or(func() (*Optional[*string], error) { return nil, want })
+		err := supplied.Error()
+		unwrap, ok := err.(interface{ Unwrap() []error })
+		if !ok {
+			t.Error("error should wrap.")
+		}
+		errs := unwrap.Unwrap()
+		if len(errs) != 3 {
+			t.Errorf("error must be 3 but %d.", len(errs))
+		}
+		if !errors.Is(err, ErrEmpty) {
+			t.Errorf("error must contain %q but %q.", ErrEmpty, err)
+		}
+		if !errors.Is(err, ErrSupplierErr) {
+			t.Errorf("error must contain %q but %q.", ErrSupplierErr, err)
+		}
+		if !errors.Is(err, want) {
+			t.Errorf("error must contain %q but %q.", want, err)
+		}
+	})
+}

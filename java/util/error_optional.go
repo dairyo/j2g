@@ -64,7 +64,7 @@ func (e *errorOptional[T]) Or(s supplier.Supplier[*Optional[T]]) *Optional[T] {
 	}
 	ret, err := s()
 	if err != nil {
-		return newErr[T](errors.Join(ErrSupplierErr, err, e.err))
+		return newErr[T](errors.Join(ErrSupplierErr, e.err, err))
 	}
 	return ret
 }
